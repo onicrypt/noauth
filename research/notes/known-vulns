@@ -1,0 +1,113 @@
+Known Vulnerabilities
+=====================
+
+There are known vulns laid out in the IETF RFC Draft for Oauth 2.0 under section 10
+
+http://tools.ietf.org/html/draft-ietf-oauth-v2-27#section-10
+http://tools.ietf.org/html/rfc6749#section-10
+
+Client Authentication
+=====================
+
+Oauth 2.0 was originally intended only for authorization, but is commonly used to also authenticate users to a service. The RFC urges against the use of Oauth for strong authentication, and instead handing off authentication to yet another provider or having the resource client handle the authentication themselves. This could be an attack vector to look for resource clients that are improperly using Oauth for authentication and authorization.
+
+Client Impersonation
+====================
+
+Because Oauth is used for authorization it is important for the authz server to authenticate authz requests. If the client cannot be authenticated directly, third-party authentication should be implemented. If that is not possible, then every redirect URI should be registered, which I understand as placing valid redirect URIs into a whitelist which is checked against on every redirect. Repeated authz requests should not be immediately processed to avoid replay attacks.
+
+Access Tokens
+=============
+
+The entire system hinges on the creation of valid access tokens, so protecting the integrity and confidentiality of these tokens is vitally important. Using encryption (ssl or tls) and cryptographic hashing algorithms are good ways to achieve both. The token is only supposed to be shared by the authz server, the resource server and the client.
+
+If weak encryption/hashing algorithms are used to conceal the token, it is easy for an attacker to brute force a collision with a valid token.
+
+The client's access to resource scope is included in the generation of tokens. The rule of least viable access should be applied, so that the client only has the minimal amount of access required to use an app. An authz server has the liberty to deviate from the requested scope, offering less rights than requested. It is unclear if the authz server can go the other direction to offer more rights.
+
+If an authz server does not properly check the resource scope of the client request the client can potentially get arbitrary access to the resource client.
+
+There is also no defined method in the RFC for the resource server to verify the client's token was issued by the authz server. A chained attack exploiting weak integrity vulns and no check on the token issuer could allow an attacker to forge excess privileges into an otherwise valid token, allowing arbitrary authz to the resource server.
+
+Refresh Tokens
+==============
+
+MUST only be transmitted using TLS to protect integrity and confidentiality in transit. Similar protections MUST be implented for storage. 
+
+According to the RFC the authz server MUST verify the binding between the refresh token and client identity, but only when the client can be authenticated. When the client cannot be authenticated, the authz server SHOULD find other ways to prevent abuse of the refresh token. The RFC gives an example of invalidating and storing refresh tokens once they have been used to successfully generate an authz token.
+
+Potential attacker could register a client that is incapable of authenticating, and attempt to repeatedly generated authz tokens for the resource server to see if any protections have been put in place.
+
+Authorization Codes
+===================
+
+The restriction on using TLS is lessened for the transport of authz codes, the RFC only says that authz servers SHOULD use TLS for the transport. Authorization codes work as bearer tokens to verify to clients that the resource server that sent the client to the authz server is the same resource server to which the authz server redirects the client. Clients that also use the code for authentication to the resource server MUST use TLS for transport.
+
+This last use case doesn't really make sense. Authz to the authz server which SHOULD authenticate the client, but the client authenticates to resource server using the authz code from the authz server... This seems like a very dangerous loop where an attacker could authenticate as an arbitrary user by forging/impersonating authz to the authz server.
+
+Authz codes are supposed to be short-lived and one-time use only. If the same authz codes are used multiple times this could be evidence of a replay attack. Either way the authz server should try to revoke all authz tokens coming from the compromised authz code.
+
+When the client can be authenticated the authz server MUST authn the client, and make sure it provides authz to the same client.
+
+Authorization Code Redirection URI Manipulation
+===============================================
+
+There is a redirect_uri parameter in the authz code that an attacker can manipulate to gain control of another users resources. The attacker can redirect the victim to a URI under attacker control, and lift the access token for the target resource. The attacker then replaces the original URI so the victim is returned to the intended resource. This is a basic redirect attack scoped to access tokens.
+
+Preventing the attack requires the authz server to ensure the request redirect URI is the same as the return redirect URI. A simple server-side comparison between the registered value and the provided value works.
+
+Resource Owner Password Credentials
+===================================
+
+The resource owner makes a trade-off between storing client usernames and passwords and handing over a token with the resource owner's password included. This is a grant type used for 'legacy or migration reasons', and seems to directly hand the owner's credentials to the client. A large amount of trust is put in the client that the client doesn't just reauthorize with escalated privileges to the resource owner's resources.
+
+Request Confidentiality
+=======================
+
+Access tokens, refresh tokens, resource owner passwords and client credentials MUST be sent over encrypted channels. 
+Authorization codes SHOULD not be sent over the clear, as this breaks confidentiality and integrity in the system. 
+
+Ensuring Endpoint Authenticity
+==============================
+
+Communication between authz and authn server MUST be over TLS. Client MUST validate the authz server's TLS cert.
+
+Credentials-Guessing Attacks
+============================
+
+Authz server MUST make it sufficiently hard for attackers to guess access tokens, authz codes, refresh tokens, resource owner passwords, and client credentials.
+This means probability of a guess MUST be less than 2^(-128) and SHOULD be lesss than 2^(-160). 
+
+Phishing Attacks
+================
+
+The RFC states that OAuth will make users more susceptible to fishing attacks by becoming apathetic to redirects that end in them entering credentials. Educating users about phishing is a good idea, but it is unclear that users would be at any more risk to phishing attacks (many phishing attacks redirect silently without users noticing).
+
+CSRF
+====
+
+Since the entire protocol hinges on protecting tokens and codes passed to the client, this is perhaps the most dangerous and prevalent attack. Authz servers and resource servers MUST implement some form of CSRF prevention by including an anti-CSRF token in a cookie, session or in the client's state. One method is to create a binding value of the client's authenticated state and authorized user-agent, hashing those values and including the hash in the state parameter. 
+
+An attacker can target the authz server's endpoint instead of the client's user-agent. The authz server MUST protect the endpoint to prevent the attacker authorizing w/o the resource owner's knowledge.
+
+Clickjacking
+============
+
+Clickjacking is similar to CSRF, and works by laying a transparent iframe over an action button on the resource owner's site. The user clicks the button thinking one action is being taken, when the attacker is actually performing some other malicious action.
+
+Code Injection and Input Validation
+===================================
+
+Authz server must protect against code injection by performing proper input validation. Code injection allows attackers to injection arbitrary data into the application which gets interpreted as code.
+
+Open Redirectors
+================
+
+Authz servers, clients and authz end-points are well-advised to validate redirect URIs by whitelisting appropriate domains. Attackers can exploit unvalidated redirects to point an authorized user to an attacker controlled resource, enabling the attacker to steal client creds.
+
+Misuse of Access Token to Impersonate Resource Owner in Implicit Flow
+=====================================================================
+
+This is an attack against a legitimate public client where the attacker impersonates a legitimate resource owner. The attacker first acts as a malicious client to get an access token from the resource owner, and then works to act as the resource owner by taking advantage of Implicit Flow (where response_type=token). The attacker can now switch a legitimate access token with the token it received earlier, giving the attacker the same permissions as the resource owner against the targeted client. This attack works because resource owners can act as intermediate authz agents between the client and other resources.
+
+Because OAuth is not intended for authentication, there is no provision within the protocol for authenticating resource owners to clients. Any application/protocol offloading authn using OAuth MUST NOT use implicit flow without using some other means of validating the access token to the client.

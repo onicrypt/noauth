@@ -1,0 +1,10 @@
+References from 
+Daniel Mayer & Joel Sandin (Time Trial, section 2.2 and 2.2.2)
+Paul Youn (isec-creating-a-safer-oauth-experience)
+RFC 6749 (OAuth 2.0), 6750 (OAuth Bearer Token) and 5849 (OAuth 1.0)
+
+Use summary of RFC and samples from Paul Youn's paper for decribing the secure, normal functioning
+Examples and techniques from Joel Sandin's and Daniel Mayer's paper to describe attacks, integrate timing attacks into testing framework
+Stand up an OAuth server, client and end-user as a testing ground
+Build a tool that can evalutate the security points of each security risk present in the protocol
+Finish write-up of the final product

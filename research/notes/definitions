@@ -1,0 +1,77 @@
+Reference: http://tools.ietf.org/html/rfc6749
+
+Access token
+	credentials provided to client after authenticating and receiving authorization grant from resource owner
+	used to access protected resources of the resource owner
+
+Refresh token
+	credentials issued to the client by the authz server to the client for getting new access tokens. not always included by
+	the authz server, but when it is it is served with the access token. can be used to get access tokens with equal or narrower
+	scope to the original access token.
+
+Authorization request
+	sent from the client to the resource owner.
+
+Authorization grant
+	issued by the resource owner to the client. used by the client to obtain access and refresh tokens from the authz server.
+	there are four types of grant: authz code, implicit, resource owner password credentials, client credentials
+	there is also an extensibility method for defining new types: 
+		who has access to this? 
+		do these types translate to servers that don't also have them defined?
+		could be a vector for escalating privileges (by manipulating scope or state)
+
+Authorization Grant Modes
+	Authz code: obtained from the authz server. resource owner redirected by client through user-agent to the authz server.
+		resource owner authenticates to the authz server
+		authz server provides authz code to resource owner
+		resource owner is redirected to the client and serves authz code to the client
+		client uses authz code to obtain an access token from authz server
+		resource owner's credentials never shared with client
+	
+	Implicit: a similiar, simplified version of the Authz code flow, but removes issuing an authz code to the client. achieved using an in-browser scripting language (JS)
+		client redirects resource owner to authz server
+		resource owner authenticates to authz server
+		authz server provides resource owner with access token
+		resource owner is redirected to the client and serves client the access token
+
+	Resource Owner Password Credentials: should only be used in high-trust situations.
+		client uses the resource owners credentials to obtain access token
+		slightly better than simply using resource owner's credentials for authz everytime
+			credentials are only used once to obtain an access/refresh token
+
+	Client credentials: should only be used as an authz grant when client is accessing resources owned by the client, 
+		or under the scope of a previous authz grant using another authz mode.
+
+Roles:
+	resource owner - person or entity with protected resources
+	resource server - machine providing access to protected resources
+	client - app requesting access to protected resources
+	authorization (authz) server - machine issuing access/refresh tokens to client. can be identical to resource server
+
+
+Client types: based on client's ability to protect the confidentiality of their credentials
+	confidential: can securely authenticate to the authz server without leaking credentials to resource owner
+	public: cannot protect credentials from leaking to the resource owner
+
+Client ID: unique string given to the client by the authz server to identify the client to the resource owner & authz server
+
+Client Authentication
+	Hinges on the security requirements of the authz server. Most cases of client credentials used to authn are username/password, but public/private keypair can also be used
+
+Client Password
+	HTTP Basic can be used to authn a client with a client password. Parameters SHOULD not be sent in the URI and TLS MUST be used when using Basic Auth for authn
+
+The spec leaves it open to authz servers on how to handle unregistered clients requesting authz
+
+Response Type
+	The client specifies the type of response desired from the authz server using the response_type parameter
+		"code" - client requests an authz code
+		"token" - client requests an access token (implicit grant)
+			- may also be a registered extension value
+
+		Extension values: registered in the Authorization Endpoint Response Types registry (MUST be ABNF form)
+			Contains three paramters: response-type (response-name *( SP response-name)), response-name (1*response-char), response-char ("_"/DIGIT/ALPHA)
+			Requests for new response types are sent to an expert review board for a 2+ week approval process, probably not a good attack vector
+
+	
+

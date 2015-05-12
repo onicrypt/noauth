@@ -1,0 +1,143 @@
+Roles:
+	Client - third-party application requesting access to protected resources (e.g. app requesting access to view Instagram photos)
+	Resource Owner - party in control of protected resources (e.g. Instagram account holder)
+	Resource Server - application server hosting protected resources of the Resource Owner
+	Authorization Server - machine in charge of authorizing client access to protected resource on the resource server
+
+Components:
+	authorization code - issued to client by authorization server to obtain an access token
+	access token - issued to client by authz server to client for authz requests to protected resources on the resource server
+	refresh token (optional) - issued to client by authz server to obtain new access token with the same or lesser scope of initial access token
+	scope - defines the level of access granted to the client by an access token
+	authorization request - sent from the client to the resource owner. 
+	authorization grant - issued to the client by the resource owner, defines the type of authorization granted to the client
+		Types: (in preferred order)
+			authorization code
+			implicit
+			resource owner password credentials
+			client credentials
+	redirect URI - the URI where the authz server redirects the client and resource owner after authorization
+
+Authorization Grant Flow:
+=========================
+
+Authorization Code Grant
+========================
+	Client sends authz request thru user-agent to authz server
+		Params:
+			response_type = code
+			client_id = unique client identifier
+			redirect_uri (optional) = uri to redirect resource owner after authz
+			scope (optional) = level of access granted by the access token
+			state (recommended) = unique nonce value included to protect against CSRF 
+	Resource Owner authenticates to the authz server
+	Authz server sends authz code to client
+	Client sends authz code and redirect URI to authz server
+		if redirect URI is included it must be identical to the one included in the initial authz request
+	Authz server sends access token (w/ optional refresh token) to client
+
+Authorization Code Response
+	If the resource owner grants access, the authz server creates and send an authz code to the client. The authz code and
+	state (if included) are appended as query parameters to the redirect URI using the "application/x-www-form-url-encoded" format
+		code = authz code issued by the authz server. Must expire shortly after being issued to prevent replay attacks. Must not be used more than once.
+		state = same value as the state parameter from the authz request. Must be included if the state parameter was present in the authz request. 
+
+Access Token Request
+	Client request to the authz server to receive an access token. Can send the request as GET/POST request
+		grant_type = "authorization_code"
+		code = authorization code from the authz code response
+		redirect_uri = required if the redirect_uri parameter was set in the authz request, and must have identical value
+		client_id = unique client identifier, require if not authenticating with authz server. not necessary otherwise
+	Authz server must
+		require client authn for confidential clients
+		ensure authz code was issued to authn client or client with same client_id from the authz code request
+		verify validity of authz code
+		ensure redirect_uri is included if it was present in the authz code request, and that the two values are identical
+
+Access Token Response
+	The authz server returns an access token and optional refresh token in an acceptable token format, e.g. JSON Web Token (JWT)
+	The Coche-Control header must be set to no-store to prevent insecure client storage of the credentials
+	
+
+Implicit Grant
+==============
+	A less-involved and less-secure method of retrieving an access token, usually implemented in JavaScript.
+	The client directly receives an access token from the authz server without the intermediate step of retrieving an authz code.
+	More susceptible to redirect-based attacks, so more care needs to be taken to validate redirection URIs.
+	No client authentication is included in Implicit flow.
+
+	Client sends authz request thru the user-agent to the authz server
+		Params:
+			response_type = "token" 
+			client_id = unique client identifier
+			redirect_uri (optional) = uri to redirect resource owner after authz
+			scope (optional) = level of access granted by the access token
+			state (recommended) = unique nonce value included to protect against CSRF
+	Authz server authenticates the resource owner, gains approval/denial of client's authz request
+	On successful authz grant, authz server redirects user-agent to client using redirect_uri in authz request
+		redirect_uri = same as authz request with the access token in the fragment
+	User-agent is redirected to web-hosted resource on the resource server, caches the content locally
+	Client returns a web page with the access token and extracts the access token
+	The user-agent executes a script to extract the access token and passes it to the client
+
+Access Token Request
+	The client redirects the resource owner using a registered redirect URI 
+	The authz server validates the request and authenticates the resource owner upon validation
+	After receiving an authz approval from the resource owner, the authz server sends the access token to the client
+
+Access Token Response
+	After the resource owner grants an authz approval, the authz server sends an access token to the client via
+	a crafted redirection URI with the "application/x-www-form-urlencoded" format and following parameters
+		access_token = access token issued by authz server
+		token_type = can be either Bearer or MAC token type (described above)
+		scope = level of access to protected resources on the resource server (optional if same as in request, required otherwise)
+		state = required if present in the authz request, optional otherwise. same purpose as state in other grant types
+	The authz server must not issue a refresh token
+
+
+Resource Owner Credentials Grant
+================================
+	Only suitable in a limited set of use cases, such as when the client is a highly privileged application or a component of the resource owner's 
+	operating system (e.g. on mobile devices)
+
+	Resource owner provides password credentials to the client
+	Client sends password credentials to the authz server
+	Authz server responds with an access token and optional refresh token
+
+Authorization Request and Response
+	Not included in the scope of the RFC
+
+Access Token Request
+	The client sends the password credentials using an "application/x-www-form-urlencoded" http request to the authz server
+		Params:
+			grant_type = "password"
+			username = resource owner's username
+			password = resource owner's password
+			scope (optional) = level of access to protected resources on the resource server
+
+	The client must also authenticate if it is a confidential client or if it was issued client credentials
+
+Access Token Response
+	The authz server returns a descriptive error on failure
+	After a successful request, it returns an access token & optional refresh token in an acceptable format, e.g. JSON Web Token (JWT)
+	The Coche-Control header must be set to no-store to prevent insecure client storage of the credentials
+
+Client Credentials Grant
+	The client can directly aquire an access token if the client is accessing its own resources or the resources of another resource owner that
+	already approved the client's access to resources (latter is not described by the RFC)
+
+	Client authenticates to the authz server using its client credentials
+	Authz server returns an access token on successful authentication
+
+Authorization Request and Response
+	Identical to the authentication request, i.e. authentication is used as authorization.
+
+Access Token Request
+	The client makes an http request with the "application/x-www-form-urlencoded" format and following parameters
+		grant_type = "client_credentials"
+		scope (optional) = level of access to protected resources on the resource server
+
+Access Token Response
+	The authz server returns a descriptive error on failure
+	After a successful request, it returns an access token & optional refresh token in an acceptable format, e.g. JSON Web Token (JWT)
+	The Cache-Control header must be set to no-store to prevent insecure client storage of the credentials

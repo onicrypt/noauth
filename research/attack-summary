@@ -1,0 +1,31 @@
+Key Concepts [1,2]
+	Resource Provider - server hosting the protected resources of the User. Can be identical to the Authorization server in some situations
+	User (Resource Owner) - registered member of the Resource Provider, owns protected resources requested by the Client
+	Client (Consumer Application) - third-party application desiring access to the protected resources of the User
+	Authorization Server - application server that authenticates the User, negotiates authorization between the User and the Consumer App, issues Access/Refresh Tokens to the Client
+	Access Token - opaque token the Authorization server issues to the Client. Client uses this token to access protected resources on the Resource Server.
+	Refresh Token - opaque token the Authorization server issues to the Client. Client uses this token to retrieve a new Access token
+	Authorization Code - the Authorization server issues this string value to the Client to later exchange for an Access Token
+
+Important Parameters [1]
+	client_id - unique identifier of the Consumer App
+	response_type - determines the grant type the Authorization Server uses to issue Access/Refresh tokens to the Consumer App
+	redirect_uri - The Consumer App's URI where the Authorization Server redirects the User
+	scope - the permissions granted to the Consumer App by the User
+	state - a unique string used to prevent CSRF attacks, maintains state b/w initial request and callback
+
+Grant Types
+	Authorization Code - most secure and preferred grant type. The Authorization Server issues an authorization code to the Consumer App which the App then uses to procure an access token. Because the Consumer App uses a third channel to retrieve the access token using the authorization code, an attacker is less likely to be able to steal the token using XSS.
+
+	Attacks
+	Authorization Code
+		CSRF [3]:
+			If the Consumer App doesn't set `state` in the initial authorization request and uses OAuth for authentication, an attacker can login as another user. An attacker must visit a site and retrieve an unused authorization code embedded in a redirect_uri sent to the Consumer App. An attacker then forces another user of the same consumer app to visit the redirect_uri while that other user is logged in to the Consumer App. The user authenticates to the Consumer App, and now the attacker can also login to the Consumer App as that user.
+		Open Redirect attack:
+			Like all grant types in the OAuth2 protocol, it is important to check the redirect_uri in the initial authorization request against the URI in the callback. It is also important to ensure the URI is in the proper domain of the Consumer App. By manipulating the redirect_uri to point to an attacker-controlled site, an attacker can retrieve the access token of a User.
+		Timing [4]:
+			By measuring small changes in server response time, it may be possible to recover access tokens byte-by-byte. If the function used by the server does not respond with constant time to incorrect and correct values at each byte position, an attacker can guess the correct value for the byte at each position. 
+[1] - "RFC 6749 - The OAuth 2.0 Authorization Framework"
+[2] - "Four Attacks on OAuth - How to Secure Your OAuth Implementation" - Khash Kiani
+[3] - "Sakurity Blog - OAuth Security Cheatsheet" - Egor Homakov, Andrey Labunets
+[4] - "Time Trial" - Joel Sandin, Daniel Mayer
