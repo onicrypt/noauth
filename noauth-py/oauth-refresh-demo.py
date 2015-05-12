@@ -13,7 +13,7 @@ app = Flask(__name__)
 # application at https://code.google.com/apis/console
 client_id = getenv('GOOGLE_CLIENT_ID') 
 client_secret = getenv('GOOGLE_CLIENT_SECRET') 
-redirect_uri = 'https://your.registered/callback'
+redirect_uri = 'http://ec2-52-8-68-137.us-west-1.compute.amazonaws.com:5000/oauth2callback'
 
 # Uncomment for detailed oauthlib logs
 #import logging
