@@ -78,6 +78,7 @@ def menu():
     <h2>What would you like to do next?</h2>
     <ul>
         <li><a href="/profile"> Get account profile</a></li>
+        <li><a href="/implicit/leaky"> Implicit mode leaking auth code</a></li>
         <li><a href="/automatic_refresh"> Implicitly refresh the token</a></li>
         <li><a href="/manual_refresh"> Explicitly refresh the token</a></li>
         <li><a href="/validate"> Validate the token</a></li>
@@ -86,6 +87,26 @@ def menu():
         %s
     </pre>
     """ % pformat(session['oauth_token'], indent=4)
+
+@app.rout("/implicit/leaky", methods=["GET","POST"])
+def implicit_leaky():
+    leaky_form = """<form id='leaky'>
+                     <tr>
+                         <td><label for='leaky-image'>Upload your images to our kitchen sink</td>
+                         <td><input name='leaky-image' type='text'></td>
+                     </tr>
+                     <tr>
+                         <td><input name='upload' type='submit' value='Upload'></td>
+                     </tr>
+                     </form>
+                 """
+    if(request.method == "GET"):
+        return leaky_form
+    elif(request.method == "POST"):
+        leaky_image = session['leaky-image']
+        return leaky_form += leaky_image 
+    else:
+        return """Wrong method jackhole"""
 
 
 @app.route("/profile", methods=["GET"])
