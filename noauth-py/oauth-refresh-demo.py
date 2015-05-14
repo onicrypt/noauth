@@ -90,7 +90,7 @@ def menu():
 
 @app.route("/implicit/leaky", methods=["GET","POST"])
 def implicit_leaky():
-    leaky_form = """<form id='leaky'>
+    leaky_form = """<form id='leaky' method="POST">
                      <tr>
                          <td><label for='leaky-image'>Upload your images to our kitchen sink</td>
                          <td><input name='leaky-image' type='text'></td>
@@ -103,8 +103,7 @@ def implicit_leaky():
     if(request.method == "GET"):
         return leaky_form
     elif(request.method == "POST"):
-        leaky_image = session['leaky-image']
-        return leaky_form + leaky_image 
+        return leaky_form + request.form['leaky-image']
     else:
         return """Wrong method jackhole"""
 
