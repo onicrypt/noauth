@@ -61,7 +61,7 @@ def callback():
 
     google = OAuth2Session(google_client_id, redirect_uri=redirect_uri,
                            state=session.pop('oauth_state', None))
-    token = google.fetch_token(google_token_url, google_client_secret=google_client_secret,
+    token = google.fetch_token(google_token_url, client_secret=google_client_secret,
                                authorization_response=request.url)
 
     # We use the session as a simple DB for this example.
