@@ -88,7 +88,7 @@ def menu():
     </pre>
     """ % pformat(session['oauth_token'], indent=4)
 
-@app.rout("/implicit/leaky", methods=["GET","POST"])
+@app.route("/implicit/leaky", methods=["GET","POST"])
 def implicit_leaky():
     leaky_form = """<form id='leaky'>
                      <tr>
@@ -104,7 +104,7 @@ def implicit_leaky():
         return leaky_form
     elif(request.method == "POST"):
         leaky_image = session['leaky-image']
-        return leaky_form += leaky_image 
+        return leaky_form + leaky_image 
     else:
         return """Wrong method jackhole"""
 
