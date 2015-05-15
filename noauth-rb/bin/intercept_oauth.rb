@@ -36,7 +36,6 @@ class NOauthProxy
   end
 
   def start_proxy
-    binding.pry
     Proxy.start(:host => @host, :port => @hport, :debug => false) do |conn|
       conn.server :srv, :host => @target, :port => @tport 
     
