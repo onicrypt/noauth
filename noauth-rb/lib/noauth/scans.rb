@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-module NOauth
+class Scan
   def check_state(data)
     # Checks if request contains state parameter
     true if(data.match(/state=\w+/))

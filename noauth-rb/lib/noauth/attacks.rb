@@ -2,7 +2,7 @@
 
 require 'curb'
 
-module NOauth
+class Attack
   def hijack_token(data)
     # Uses primed oauth code & social engineering to
     # trick user into authorizing to application.

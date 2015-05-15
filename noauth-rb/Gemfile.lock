@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    NOauth (0.0.1)
+    noauth (0.0.1)
 
 GEM
   remote: https://rubygems.org/
@@ -23,9 +23,9 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  NOauth!
   bundler (= 1.9.8)
-  curb
-  em-proxy
-  pry (>= 0.10.1)
+  curb (= 0.8.8)
+  em-proxy (= 0.1.8)
+  noauth!
+  pry (~> 0.10, >= 0.10.1)
   rake (= 10.4.2)
