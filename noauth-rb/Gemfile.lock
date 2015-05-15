@@ -24,8 +24,8 @@ PLATFORMS
 
 DEPENDENCIES
   NOauth!
-  bundler
+  bundler (= 1.9.8)
   curb
   em-proxy
-  pry
-  rake
+  pry (>= 0.10.1)
+  rake (= 10.4.2)
