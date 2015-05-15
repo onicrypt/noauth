@@ -66,7 +66,7 @@ module NOauth
       end
       
       def initialize(host=nil, hport=nil, target=nil, tport=nil, attack=nil)
-        @options = self.parse_options
+        @options = parse_options
     
         @host = host || @options[:host]
         @hport = hport || @options[:hport]
