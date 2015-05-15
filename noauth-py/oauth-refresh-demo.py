@@ -13,8 +13,13 @@ app = Flask(__name__)
 # application at https://code.google.com/apis/console
 google_client_id = getenv('GOOGLE_CLIENT_ID') 
 google_client_secret = getenv('GOOGLE_CLIENT_SECRET') 
-redirect_uri = 'http://ec2-52-8-68-137.us-west-1.compute.amazonaws.com:5000/oauth2callback'
 
+google_client_id = getenv('LEAKY_CLIENT_ID') 
+google_client_secret = getenv('LEAKY_CLIENT_SECRET') 
+
+app_url ='http://ec2-52-8-68-137.us-west-1.compute.amazonaws.com:5000' 
+redirect_uri = app_url + '/oauth2callback'
+leaky_redirect_uri = app_url + '/leakycallback'
 # Uncomment for detailed oauthlib logs
 #import logging
 #import sys
@@ -33,12 +38,25 @@ scope = [
 
 @app.route("/oauth2/google")
 def google_oauth():
-    """Step 1: User Authorization.
-
-    Redirect the user/resource owner to the OAuth provider (i.e. Google)
-    using an URL with a few key OAuth parameters.
+    """Step 1: User Authorization for Google OAuth.
     """
-    google = OAuth2Session(google_client_id, scope=scope, redirect_uri=redirect_uri)
+    google = OAuth2Session(google_client_id, scope=scope, 
+				redirect_uri=redirect_uri)
+    authorization_url, state = google.authorization_url(google_auth_base_url,
+        # offline for refresh token
+        # force to always make user click authorize
+        access_type="offline", approval_prompt="force")
+
+    # State is used to prevent CSRF, keep this for later.
+    session['oauth_state'] = state
+    return redirect(authorization_url)
+
+@app.route("/oauth2/leaky")
+def leaky_oauth():
+    """ Initial call to OAuth Provider for leaky auth code
+    """
+    google = OAuth2Session(google_client_id, scope=scope, 
+				redirect_uri=leaky_redirect_uri)
     authorization_url, state = google.authorization_url(google_auth_base_url,
         # offline for refresh token
         # force to always make user click authorize
@@ -49,7 +67,6 @@ def google_oauth():
     return redirect(authorization_url)
 
 
-# Step 2: User authorization, this happens on the provider.
 @app.route("/oauth2callback", methods=["GET"])
 def callback():
     """ Step 3: Retrieving an access token.
@@ -61,18 +78,34 @@ def callback():
 
     google = OAuth2Session(google_client_id, redirect_uri=redirect_uri,
                            state=session.pop('oauth_state', None))
-    token = google.fetch_token(google_token_url, client_secret=google_client_secret,
-                               authorization_response=request.url)
+
+    token = google.fetch_token(google_token_url, 
+				client_secret=google_client_secret,
+				authorization_response=request.url)
 
     # We use the session as a simple DB for this example.
     session['oauth_token'] = token
 
     return redirect(url_for('.menu'))
 
+@app.route("/leakycallback", methods=["GET"])
+def leaky_callback():
+    """ Oauth callback that leaks the auth code
+    """
+    google = OAuth2Session(google_client_id, redirect_uri=redirect_uri,
+                           state=session.pop('oauth_state', None))
+    token = google.fetch_token(google_token_url, 
+				client_secret=google_client_secret, 
+				authorization_response=request.url)
+
+    # We use the session as a simple DB for this example.
+    session['oauth_token'] = token
+
+    return redirect(url_for('.code/leaky'))
 
 @app.route("/menu", methods=["GET"])
 def menu():
-    """"""
+    """ """
     return """
     <h1>Congratulations, you have obtained an OAuth 2 token!</h1>
     <h2>What would you like to do next?</h2>
@@ -88,7 +121,7 @@ def menu():
     </pre>
     """ % pformat(session['oauth_token'], indent=4)
 
-@app.route("/implicit/leaky", methods=["GET","POST"])
+@app.route("/code/leaky", methods=["GET","POST"])
 def implicit_leaky():
     leaky_form = """<form id='leaky' method="POST">
                      <tr>
