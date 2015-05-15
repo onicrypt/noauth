@@ -7,7 +7,7 @@ require 'pry'
 module NOauth
   module Intercept
     class Proxy
-      def parse_options
+      def self.parse_options
         options = {}
     
         OptionParser.new do |opts|
@@ -66,7 +66,7 @@ module NOauth
       end
       
       def initialize(host=nil, hport=nil, target=nil, tport=nil, attack=nil)
-        @options = parse_options
+        @options = self.parse_options
     
         @host = host || @options[:host]
         @hport = hport || @options[:hport]
