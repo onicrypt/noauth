@@ -4,12 +4,12 @@ require 'noauth'
 
 h, hp, t, tp = nil, nil, nil, nil
 
-if NOauth::Intercept::Proxy.parse_options.empty?
+if NOauth::Intercept::NOProxy.parse_options.empty?
   h = "127.0.0.1"
   hp = 9090
   t = "52.8.68.137"
   tp = 5000
 end
 
-n = NOauth::Intercept::Proxy.new(host=h, hport=hp, target=t, tport=tp)
+n = NOauth::Intercept::NOProxy.new(host=h, hport=hp, target=t, tport=tp)
 n.start_proxy

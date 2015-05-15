@@ -6,7 +6,7 @@ require 'pry'
 
 module NOauth
   module Intercept
-    class Proxy
+    class NOProxy
       def self.parse_options
         options = {}
     
