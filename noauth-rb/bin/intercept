@@ -2,7 +2,7 @@
 
 require 'noauth'
 
-h, hp, t, tp = None, None, None, None
+h, hp, t, tp = nil, nil, nil, nil
 
 if NOauth::Intercept::Proxy.parse_options.empty?
   h = "127.0.0.1"

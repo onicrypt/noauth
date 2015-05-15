@@ -64,7 +64,7 @@ module Intercept
       end
     end
     
-    def initialize(host=None, hport=None, target=None, tport=None, attack=None)
+    def initialize(host=nil, hport=nil, target=nil, tport=nil, attack=nil)
       @options = parse_options
   
       @host = host || @options[:host]
